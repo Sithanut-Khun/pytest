@@ -1,14 +1,23 @@
 import pandas as pd
-import numpy as np
+import os
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error
 
 def load_data():
     """
-    Load house price data from CSV file
+    Load house price data using relative path
     """
-    df = pd.read_csv('../dataset/house_price.csv')
-    return df
+    dataset_path = 'dataset/house_price.csv'
+
+    if not os.path.exists(dataset_path):
+        dataset_path = '../dataset/house_price.csv'
+    
+    if os.path.exists(dataset_path):
+        df = pd.read_csv(dataset_path)
+        print(f"Successfully loaded data from: {dataset_path}")
+        return df
+    else:
+        raise FileNotFoundError(f"Could not find dataset at: {dataset_path}")
 
 def train_model(df):
     """
