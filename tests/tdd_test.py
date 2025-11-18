@@ -1,5 +1,5 @@
 import pandas as pd
-from clean_data import normalize_column
+from functions.clean_data import normalize_column
 import numpy as np
 import pytest
 

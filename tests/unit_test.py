@@ -1,7 +1,6 @@
 import pytest
 import pandas as pd
-import numpy as np
-from clean_data import clean_data, normalize_column
+from functions.clean_data import clean_data
 
 class TestDataCleaningSimple:
     """Simple test"""

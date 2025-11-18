@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from clean_data import evaluate_model
+from functions.clean_data import evaluate_model
 
 # Tests (written first, before implementation)
 def test_perfect_accuracy():
