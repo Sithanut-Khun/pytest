@@ -7,7 +7,7 @@ def load_data():
     """
     Load house price data from CSV file
     """
-    df = pd.read_csv(r'D:\ITC_Year_5\Advance For DS\TP\TP3\dataset\house_price.csv')
+    df = pd.read_csv('../dataset/house_price.csv')
     return df
 
 def train_model(df):
