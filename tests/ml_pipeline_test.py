@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from sklearn.exceptions import NotFittedError
+from sklearn.metrics import r2_score
 from functions.mini_ml_pipeline import load_data, train_model, evaluate_model
 
 def test_data_loading():
@@ -22,7 +23,7 @@ def test_data_loading():
 def test_model_training():
     """Test that Linear Regression model trains without errors"""
     df = load_data()
-    model = train_model(df)
+    model, X_train, X_test, y_train, y_test = train_model(df)
     
     # Check model is trained (has coefficients/intercept)
     assert hasattr(model, 'coef_')
@@ -30,7 +31,7 @@ def test_model_training():
     
     # Check model can make predictions without error
     try:
-        sample_data = df[['Bedroom', 'Total-Sqft', 'Bathroom']].iloc[:1]
+        sample_data = X_test.iloc[:1]
         predictions = model.predict(sample_data)
         assert len(predictions) == 1
         assert isinstance(predictions[0], (int, float, np.floating))
@@ -40,30 +41,26 @@ def test_model_training():
 def test_pipeline_prediction():
     """Test end-to-end pipeline and prediction range"""
     df = load_data()
-    model = train_model(df)
-    predictions = evaluate_model(df, model)
+    model, X_train, X_test, y_train, y_test = train_model(df)
+    predictions = evaluate_model(model, X_test, y_test)
     
     # Check predictions are valid numbers
     assert all(isinstance(pred, (int, float, np.floating)) for pred in predictions)
-    assert len(predictions) == len(df)
+    assert len(predictions) == len(X_test)
     
     # Check predictions are reasonable (positive prices)
     assert all(pred > 0 for pred in predictions)
 
 def test_end_to_end_pipeline():
     """Complete integration test of all components"""
-    # Load data
     df = load_data()
-    assert len(df) > 0
-    assert 'Price' in df.columns
+    model, X_train, X_test, y_train, y_test = train_model(df)
     
-    # Train model
-    model = train_model(df)
-    assert hasattr(model, 'predict')
+    predictions = evaluate_model(model, X_test, y_test)
     
-    # Evaluate model
-    predictions = evaluate_model(df, model)
-    assert len(predictions) == len(df)
+    assert len(X_train) > 0
+    assert len(X_test) > 0
+    assert len(predictions) == len(y_test)
     assert all(pred > 0 for pred in predictions)
 
 def test_data_quality():
@@ -83,14 +80,11 @@ def test_data_quality():
     assert df['Price'].between(50000, 3000000).all()
 
 def test_model_performance():
-    """Test that model has reasonable performance"""
+    """Test that model has reasonable performance on test set"""
     df = load_data()
-    model = train_model(df)
-    predictions = evaluate_model(df, model)
+    model, X_train, X_test, y_train, y_test = train_model(df)
     
-    # Calculate R² score to evaluate performance
-    from sklearn.metrics import r2_score, accuracy_score
-    r2 = r2_score(df['Price'], predictions)
+    predictions = evaluate_model(model, X_test, y_test)
     
-    # For such a small dataset, we just check the metric is calculated
-    assert -1 <= r2 <= 1  # R² can be negative if model is worse than mean
+    r2 = r2_score(y_test, predictions)
+    assert -1 <= r2 <= 1  

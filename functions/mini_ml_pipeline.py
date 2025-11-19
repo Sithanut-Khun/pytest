@@ -2,6 +2,8 @@ import pandas as pd
 import os
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error
+from sklearn.model_selection import train_test_split
+
 
 def load_data():
     """
@@ -21,53 +23,54 @@ def load_data():
 
 def train_model(df):
     """
-    Train a Linear Regression model to predict house prices
+    Train a Linear Regression model using train/test split
     """
-    # Prepare features and target
     X = df[['Bedroom', 'Total-Sqft', 'Bathroom']]
     y = df['Price']
-    
+
+    # Split data (80% train, 20% test)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
     # Train model
     model = LinearRegression()
-    model.fit(X, y)
-    
-    return model
+    model.fit(X_train, y_train)
 
-def evaluate_model(df, model):
+    return model, X_train, X_test, y_train, y_test
+
+def evaluate_model(model, X_test, y_test):
     """
     Make predictions using the trained model
     Returns predictions and evaluation metrics
     """
-    # Prepare features
-    X = df[['Bedroom', 'Total-Sqft', 'Bathroom']]
-    
-    # Make predictions
-    predictions = model.predict(X)
+    predictions = model.predict(X_test)
     
     return predictions
 
 def run_house_price_pipeline():
-    """
-    Complete end-to-end house price prediction pipeline
-    """
     df = load_data()
-    model = train_model(df)
-    predictions = evaluate_model(df, model)
+
+    model, X_train, X_test, y_train, y_test = train_model(df)
     
-    # Calculate evaluation metrics
-    r2 = r2_score(df['Price'], predictions)
-    mae = mean_absolute_error(df['Price'], predictions)
-    
+    predictions = evaluate_model(model, X_test, y_test)
+
+    # Evaluation on test data only
+    r2 = r2_score(y_test, predictions)
+    mae = mean_absolute_error(y_test, predictions)
+
     return {
-        'data_shape': df.shape,
+        'train_shape': X_train.shape,
+        'test_shape': X_test.shape,
         'model_type': type(model).__name__,
         'coefficients': dict(zip(['Bedroom', 'Total-Sqft', 'Bathroom'], model.coef_)),
         'intercept': model.intercept_,
         'r2_score': r2,
         'mae': mae,
         'predictions': predictions,
-        'actual_prices': df['Price'].values
+        'actual_prices': y_test.values
     }
+
 
 def predict_new_house(model, bedroom, sqft, bathroom):
     """
@@ -81,3 +84,13 @@ def predict_new_house(model, bedroom, sqft, bathroom):
     
     prediction = model.predict(new_data)
     return prediction[0]
+
+
+if __name__ == "__main__":
+    results = run_house_price_pipeline()
+    print("Pipeline Results:")
+    for key, value in results.items():
+        if key in ['predictions', 'actual_prices']:
+            print(f"{key}: {value[:5]}...")  # Print only first 5 values
+        else:
+            print(f"{key}: {value}")
